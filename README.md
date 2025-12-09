@@ -313,12 +313,6 @@ npm install --save-dev @vitest/coverage-v8
 npm run lint         # Run ESLint
 ```
 
-## 🤝 Contributing
-
-This is a demonstration project. Feel free to:
-- Report issues
-- Suggest improvements
-- Fork and extend functionality
-
 **Note**: This is a frontend-only implementation with simulated backend. For production use, integrate with a real backend API that handles chunk storage and file reassembly.
+
 
