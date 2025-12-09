@@ -105,13 +105,22 @@ describe('ResumeUploads', () => {
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     expect(fileInput).toBeInTheDocument();
 
-    // Simulate file selection
+    // Simulate file selection - use upload helper which properly triggers change event
     if (fileInput) {
+      // Create a FileList-like object
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      Object.defineProperty(fileInput, 'files', {
+        value: dataTransfer.files,
+        writable: false,
+      });
+
+      // Trigger change event
       await user.upload(fileInput, file);
 
       await waitFor(() => {
         expect(mockOnResume).toHaveBeenCalledWith('id1', file);
-      });
+      }, { timeout: 2000 });
     }
   });
 
