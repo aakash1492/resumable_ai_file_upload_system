@@ -85,10 +85,10 @@ export default function FileUpload({ onUploadStart }: FileUploadProps) {
 
   const getSpeedLabel = (speed: UploadSpeed): string => {
     const labels: Record<UploadSpeed, string> = {
-      fast: '⚡ Fast',
-      normal: '🚀 Normal',
-      slow: '🐌 Slow',
-      verySlow: '🐢 Very Slow',
+      fast: 'Fast',
+      normal: 'Normal',
+      slow: 'Slow',
+      verySlow: 'Very Slow',
     };
     return labels[speed];
   };
@@ -171,4 +171,5 @@ export default function FileUpload({ onUploadStart }: FileUploadProps) {
     </div>
   );
 }
+
 
