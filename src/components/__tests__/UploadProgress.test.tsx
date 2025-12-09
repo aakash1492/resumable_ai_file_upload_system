@@ -163,7 +163,6 @@ describe('UploadProgress', () => {
   });
 
   it('should show pause button when uploading', async () => {
-    const user = userEvent.setup();
     const uploadState = createUploadState('test-id', 'test.txt', 1024, 2, 512);
     
     // Mock uploadChunk to simulate slow upload (never resolves)
