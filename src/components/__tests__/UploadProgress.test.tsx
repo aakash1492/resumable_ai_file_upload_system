@@ -24,7 +24,11 @@ describe('UploadProgress', () => {
     vi.clearAllMocks();
     localStorage.clear();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    vi.mocked(api.uploadChunk).mockResolvedValue(undefined);
+    // Default: successful uploads (resolves quickly)
+    vi.mocked(api.uploadChunk).mockImplementation(async () => {
+      await new Promise(resolve => setTimeout(resolve, 10));
+      return undefined;
+    });
   });
 
   it('should display file name and progress', () => {
@@ -135,26 +139,35 @@ describe('UploadProgress', () => {
     expect(screen.getByText(/file needed to resume/i)).toBeInTheDocument();
   });
 
-  it('should show start/resume button when not uploading', () => {
+  it('should show start/resume button when not uploading', async () => {
     const uploadState = createUploadState('test-id', 'test.txt', 1024, 4, 256);
+    
+    // Mock uploadChunk to prevent auto-start from completing
+    vi.mocked(api.uploadChunk).mockImplementation(() => new Promise(() => {})); // Never resolves
 
     render(
       <UploadProgress
         uploadState={uploadState}
-        file={mockFile}
+        file={null} // No file to prevent auto-start
         onComplete={mockOnComplete}
         onCancel={mockOnCancel}
         onFileSelect={mockOnFileSelect}
       />
     );
 
-    // Button text is "Start Upload" or "Resume Upload" (capitalized)
-    expect(screen.getByText('Start Upload')).toBeInTheDocument();
+    // Wait a bit for any async operations
+    await waitFor(() => {
+      // Button text is "Start Upload" or "Resume Upload" (capitalized)
+      expect(screen.getByText('Start Upload')).toBeInTheDocument();
+    }, { timeout: 1000 });
   });
 
   it('should show pause button when uploading', async () => {
     const user = userEvent.setup();
     const uploadState = createUploadState('test-id', 'test.txt', 1024, 2, 512);
+    
+    // Mock uploadChunk to simulate slow upload (never resolves)
+    vi.mocked(api.uploadChunk).mockImplementation(() => new Promise(() => {}));
 
     render(
       <UploadProgress
@@ -166,9 +179,7 @@ describe('UploadProgress', () => {
       />
     );
 
-    const startButton = screen.getByText('Start Upload');
-    await user.click(startButton);
-
+    // Wait for auto-start to begin (component auto-starts when file is available)
     await waitFor(() => {
       expect(screen.getByText('Pause')).toBeInTheDocument();
     }, { timeout: 2000 });
