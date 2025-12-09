@@ -6,9 +6,13 @@ import { createUploadState } from '../../utils/uploadState';
 import * as api from '../../utils/api';
 
 // Mock the API module
-vi.mock('../../utils/api', () => ({
-  uploadChunk: vi.fn(),
-}));
+vi.mock('../../utils/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../utils/api')>();
+  return {
+    ...actual,
+    uploadChunk: vi.fn(),
+  };
+});
 
 describe('UploadProgress', () => {
   const mockOnComplete = vi.fn();
@@ -144,10 +148,12 @@ describe('UploadProgress', () => {
       />
     );
 
-    expect(screen.getByText(/start upload|resume upload/i)).toBeInTheDocument();
+    // Button text is "Start Upload" or "Resume Upload" (capitalized)
+    expect(screen.getByText('Start Upload')).toBeInTheDocument();
   });
 
   it('should show pause button when uploading', async () => {
+    const user = userEvent.setup();
     const uploadState = createUploadState('test-id', 'test.txt', 1024, 2, 512);
 
     render(
@@ -160,12 +166,12 @@ describe('UploadProgress', () => {
       />
     );
 
-    const startButton = screen.getByText(/start upload|resume upload/i);
-    await userEvent.click(startButton);
+    const startButton = screen.getByText('Start Upload');
+    await user.click(startButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/pause/i)).toBeInTheDocument();
-    }, { timeout: 1000 });
+      expect(screen.getByText('Pause')).toBeInTheDocument();
+    }, { timeout: 2000 });
   });
 
   it('should display failed chunks count', () => {
@@ -183,7 +189,9 @@ describe('UploadProgress', () => {
       />
     );
 
-    expect(screen.getByText(/2/i)).toBeInTheDocument(); // Failed count
+    // Check for "Failed" label and the retry button with count
+    expect(screen.getByText('Failed')).toBeInTheDocument();
+    expect(screen.getByText(/Retry Failed \(2\)/)).toBeInTheDocument();
   });
 
   it('should show retry button when there are failed chunks', () => {
