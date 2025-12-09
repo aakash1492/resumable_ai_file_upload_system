@@ -21,27 +21,19 @@ export function useResumableUpload({
   const [state, setState] = useState<UploadState>(uploadState);
   const [isUploading, setIsUploading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [uploadSpeed, setUploadSpeed] = useState<UploadSpeed>(getUploadSpeed());
-  const abortControllerRef = useRef<AbortController | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const stateRef = useRef<UploadState>(uploadState);
   const isPausedRef = useRef(false);
-  const isUploadingRef = useRef(false);
 
-  // Keep stateRef in sync with state
+  // Keep stateRef in sync with state (needed for async loop)
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
 
-  // Keep isPausedRef in sync with isPaused
+  // Keep isPausedRef in sync with isPaused (needed for async loop)
   useEffect(() => {
     isPausedRef.current = isPaused;
   }, [isPaused]);
-
-  // Keep isUploadingRef in sync with isUploading
-  useEffect(() => {
-    isUploadingRef.current = isUploading;
-  }, [isUploading]);
 
   // Load file chunks when file is available
   useEffect(() => {
@@ -125,8 +117,8 @@ export function useResumableUpload({
     }
 
     // If already uploading and not paused, don't start again
-    // But if paused, we want to resume, so allow it
-    if (isUploadingRef.current && !isPausedRef.current) {
+    // But allow resume if paused
+    if (isUploading && !isPaused) {
       return;
     }
 
@@ -134,8 +126,6 @@ export function useResumableUpload({
     setIsPaused(false);
     isPausedRef.current = false;
     setIsUploading(true);
-    isUploadingRef.current = true;
-    abortControllerRef.current = new AbortController();
 
     let hasMoreChunks = true;
 
@@ -169,17 +159,12 @@ export function useResumableUpload({
         break;
       }
 
-      // Check completion after state updates
-      // Use a small delay to allow state updates to propagate
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      
       // Check if all chunks are uploaded using latest state
       const latestState = stateRef.current;
       const allUploaded = latestState.chunks.every((chunk) => chunk.uploaded);
       if (allUploaded) {
         hasMoreChunks = false;
         setIsUploading(false);
-        isUploadingRef.current = false;
         onComplete();
         break;
       }
@@ -193,42 +178,34 @@ export function useResumableUpload({
       await retryFailedChunks();
     }
 
-    // Final check
+    // Final check - only needed if loop exited due to pause
+    if (isPausedRef.current) {
+      // Keep isUploading as true so resume can work
+      return;
+    }
+
+    // Check if all chunks uploaded (in case retry completed everything)
     setState((prevState) => {
       const allUploaded = prevState.chunks.every((chunk) => chunk.uploaded);
       if (allUploaded) {
         setIsUploading(false);
-        isUploadingRef.current = false;
         onComplete();
-      } else if (isPausedRef.current) {
-        // If paused, keep isUploading as true so resume can work
-        // Don't set isUploading to false when paused
-        // isUploadingRef.current remains true
       } else {
         setIsUploading(false);
-        isUploadingRef.current = false;
       }
       return prevState;
     });
-  }, [file, uploadSingleChunk, retryFailedChunks, onComplete]);
+  }, [file, isUploading, isPaused, uploadSingleChunk, retryFailedChunks, onComplete]);
 
   const pauseUpload = useCallback(() => {
     setIsPaused(true);
     isPausedRef.current = true;
-    abortControllerRef.current?.abort();
   }, []);
 
   const resumeUpload = useCallback(() => {
-    // Always restart the upload loop when resuming
-    // Clear the pause state
+    // Clear pause state and restart upload
     setIsPaused(false);
     isPausedRef.current = false;
-    
-    // Reset uploading ref to allow startUpload to proceed
-    // (it will set it back to true)
-    isUploadingRef.current = false;
-    
-    // Now start the upload
     startUpload();
   }, [startUpload]);
 
@@ -247,17 +224,15 @@ export function useResumableUpload({
   }, [state.chunks]);
 
   const changeSpeed = useCallback((speed: UploadSpeed) => {
-    // Update the global speed setting in the API module
+    // Update the global speed setting (used by uploadChunk)
     setGlobalUploadSpeed(speed);
-    // Update local state
-    setUploadSpeed(speed);
   }, []);
 
   return {
     state,
     isUploading,
     isPaused,
-    uploadSpeed,
+    uploadSpeed: getUploadSpeed(), // Get from global state
     progress: getProgress(),
     uploadedBytes: getUploadedBytes(),
     failedChunks: getFailedChunks(),
@@ -268,4 +243,3 @@ export function useResumableUpload({
     changeSpeed,
   };
 }
-
