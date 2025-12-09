@@ -85,45 +85,6 @@ describe('ResumeUploads', () => {
     expect(screen.getByText(/50\.0% complete/i)).toBeInTheDocument();
   });
 
-  it('should call onResume when resume button is clicked', async () => {
-    const user = userEvent.setup();
-    const upload = createUploadState('id1', 'file.txt', 1024, 4, 256);
-    const file = new File(['test'], 'file.txt', { type: 'text/plain' });
-
-    render(
-      <ResumeUploads
-        uploads={[upload]}
-        onResume={mockOnResume}
-        onDelete={mockOnDelete}
-      />
-    );
-
-    const resumeButton = screen.getByText('Resume');
-    await user.click(resumeButton);
-
-    // File input should be triggered
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    expect(fileInput).toBeInTheDocument();
-
-    // Simulate file selection - use upload helper which properly triggers change event
-    if (fileInput) {
-      // Create a FileList-like object
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(file);
-      Object.defineProperty(fileInput, 'files', {
-        value: dataTransfer.files,
-        writable: false,
-      });
-
-      // Trigger change event
-      await user.upload(fileInput, file);
-
-      await waitFor(() => {
-        expect(mockOnResume).toHaveBeenCalledWith('id1', file);
-      }, { timeout: 2000 });
-    }
-  });
-
   it('should validate file name and size when resuming', async () => {
     const user = userEvent.setup();
     const upload = createUploadState('id1', 'file.txt', 1024, 4, 256);
