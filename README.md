@@ -4,21 +4,32 @@ A modern, resilient file upload system built with React, Vite, TypeScript, and T
 
 ## Actual Implementation (Frontend Only)
 
-1. User selects file
-   ↓
-2. Generate uploadId locally (no API call)
-   ↓
-3. Split file into chunks
-   ↓
-4. Upload chunks in parallel (simulated API)
-   ↓
-5. Retry failed chunks
-   ↓
-6. Resume using localStorage (not /status endpoint)
-   ↓
-7. onComplete callback (no API call)
-   ↓
-8. Done
+```mermaid
+flowchart TD
+    A[User selects file] --> B[Generate uploadId locally]
+    B --> C[Split file into chunks<br/>1 MB each]
+    C --> D[Upload chunks in parallel<br/>5 chunks at a time]
+    D --> E{All chunks<br/>uploaded?}
+    E -->|No| F{Any chunks<br/>failed?}
+    F -->|Yes| G[Retry failed chunks<br/>up to 3 attempts]
+    G --> D
+    F -->|No| D
+    E -->|Yes| H[onComplete callback]
+    H --> I[Done]
+    
+    J[Network dies /<br/>Browser closed] --> K[State saved to<br/>localStorage]
+    K --> L[User returns]
+    L --> M[Load state from<br/>localStorage]
+    M --> N[User re-selects file]
+    N --> O[Validate file name & size]
+    O --> P[Skip already uploaded chunks]
+    P --> D
+    
+    style A fill:#e1f5ff
+    style I fill:#c8e6c9
+    style J fill:#ffccbc
+    style K fill:#fff9c4
+```
 
 
 ## 🚀 Features
@@ -314,5 +325,4 @@ npm run lint         # Run ESLint
 ```
 
 **Note**: This is a frontend-only implementation with simulated backend. For production use, integrate with a real backend API that handles chunk storage and file reassembly.
-
 
