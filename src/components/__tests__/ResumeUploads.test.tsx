@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ResumeUploads from '../ResumeUploads';
@@ -11,6 +11,12 @@ describe('ResumeUploads', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    // Mock window.alert for all tests
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('should not render when there are no uploads', () => {
