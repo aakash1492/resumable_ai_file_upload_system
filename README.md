@@ -281,20 +281,7 @@ number[] // Array of chunk indices
 - **No File Storage**: File objects cannot be stored in localStorage
 - **Browser-Specific**: Data is specific to the browser and domain
 
-### For Production Use
-
-Consider these improvements:
-
-1. **Backend Integration**: Replace simulated API with real backend endpoints
-2. **IndexedDB**: Use IndexedDB for storing file chunks locally (larger capacity)
-3. **File Validation**: Add file type and size validation
-4. **Upload Limits**: Implement maximum file size limits
-5. **Authentication**: Add user authentication for secure uploads
-6. **Progress Persistence**: Store progress on server for cross-device resume
-7. **Chunk Verification**: Add checksums/MD5 for chunk integrity
-8. **Compression**: Add optional file compression before upload
-
-## 📝 Scripts
+## Scripts
 
 ```bash
 npm run dev          # Start development server
@@ -407,4 +394,5 @@ After reassembly, the system performs PII detection:
   - Files with prohibited PII are rejected
   - Compliance violations trigger alerts and audit logs
 ---
+
 
