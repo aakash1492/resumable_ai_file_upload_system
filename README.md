@@ -326,3 +326,22 @@ npm run lint         # Run ESLint
 
 **Note**: This is a frontend-only implementation with simulated backend. For production use, integrate with a real backend API that handles chunk storage and file reassembly.
 
+
+**AI specific aspects**: 
+
+**1)** How this upload system would integrate into:
+   a) A fine tuning pipeline - Once the upload completes, the server publishes a message (Kafka/PubSub) describing the dataset location, metadata, size, and schema. The fine-tuning service consumes this message and initiates preprocessing, tokenization, and model training with the newly uploaded dataset. This ensures the upload pipeline feeds directly into ML model lifecycle workflows.
+   
+   b) A data curation or labeling system - After upload completion, the file may be routed into a data curation system, where it undergoes validation, sampling, and labeling. Metadata generated during upload (size, file type, chunk count) is attached to curation workflows to support QA, annotation, and dataset refinement.
+
+**2)** How you might: 
+   a) Validate schema or format before accepting a dataset - Before accepting the dataset, the upload service streams the reassembled file through a schema validator (JSON schema, CSV header validation). Invalid rows or malformed files trigger a rejection or partial acceptance workflow, ensuring downstream training robustness.
+
+   b) Generate metadata for data catalog or lineage tracking - During the finalization step, metadata such as file size, checksum, schema type, number of rows, and uploader identity is written into a data catalog. This information enables dataset lineage tracking, reproducibility, and auditability across fine-tuned models.
+
+**3)** Where you would plug in: 
+    a) Virus or content scanning - Before storing the dataset, scan with: ClamAV, VirusTotal, In-house malware scanner. Especially critical if files come from external customers.
+
+    b) PII detection for compliant AI datasets - After reassembly, the system runs virus scanning and PII detection (via tools like ClamAV or Presidio). Files containing malware or prohibited personal data can be quarantined or rejected to maintain compliance with GDPR, HIPAA, SOC2, and internal data governance policies.
+These AI-specific additions make the system production-grade, compliant, and aligned with modern AI workflows.
+
