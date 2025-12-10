@@ -209,6 +209,13 @@ export function useResumableUpload({
     startUpload();
   }, [startUpload]);
 
+  const cancelUpload = useCallback(() => {
+    // Stop upload by pausing and setting isUploading to false
+    setIsPaused(true);
+    isPausedRef.current = true;
+    setIsUploading(false);
+  }, []);
+
   const getProgress = useCallback(() => {
     const uploadedCount = state.chunks.filter((chunk) => chunk.uploaded).length;
     return (uploadedCount / state.totalChunks) * 100;
@@ -239,6 +246,7 @@ export function useResumableUpload({
     startUpload,
     pauseUpload,
     resumeUpload,
+    cancelUpload,
     retryFailedChunks,
     changeSpeed,
   };
