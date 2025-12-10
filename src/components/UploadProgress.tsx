@@ -3,6 +3,7 @@ import { UploadState } from '../types/upload';
 import { useResumableUpload } from '../hooks/useResumableUpload';
 import { UPLOAD_SPEEDS, type UploadSpeed } from '../utils/api';
 import { ChevronDownIcon } from '../assets/icons';
+import { formatBytes, getSpeedLabel, formatTime } from '../utils/formatters';
 
 interface UploadProgressProps {
   uploadState: UploadState;
@@ -35,6 +36,7 @@ export default function UploadProgress({
     startUpload,
     pauseUpload,
     resumeUpload,
+    cancelUpload,
     retryFailedChunks,
     changeSpeed,
   } = useResumableUpload({
@@ -65,28 +67,6 @@ export default function UploadProgress({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
 
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
-
-  const formatTime = (ms: number): string => {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-
-    if (hours > 0) {
-      return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${seconds % 60}s`;
-    } else {
-      return `${seconds}s`;
-    }
-  };
-
   const getElapsedTime = (): number => {
     return Date.now() - state.startTime;
   };
@@ -102,16 +82,6 @@ export default function UploadProgress({
   const failedCount = failedChunks.length;
 
   const needsFile = !file && state.chunks.some((chunk) => !chunk.uploaded);
-
-  const getSpeedLabel = (speed: UploadSpeed): string => {
-    const labels: Record<UploadSpeed, string> = {
-      fast: 'Fast',
-      normal: 'Normal',
-      slow: 'Slow',
-      verySlow: 'Very Slow',
-    };
-    return labels[speed];
-  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -141,7 +111,10 @@ export default function UploadProgress({
           </p>
         </div>
         <button
-          onClick={onCancel}
+          onClick={() => {
+            cancelUpload();
+            onCancel();
+          }}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
         >
           Cancel
@@ -301,5 +274,3 @@ export default function UploadProgress({
     </div>
   );
 }
-
-
