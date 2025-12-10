@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect } from 'react';
 import { UploadState } from '../types/upload';
-import { generateUploadId, splitFileIntoChunks } from '../utils/fileChunker';
+import { generateUploadId } from '../utils/fileChunker';
 import { createUploadState, saveUploadState } from '../utils/uploadState';
 import { UploadIcon } from '../assets/icons';
 import { UPLOAD_SPEEDS, getUploadSpeed, setUploadSpeed, type UploadSpeed } from '../utils/api';
+import { getSpeedLabel } from '../utils/formatters';
 
 const CHUNK_SIZE = 1024 * 1024; // 1 MB
 
@@ -32,9 +33,9 @@ export default function FileUpload({ onUploadStart }: FileUploadProps) {
     // Generate unique upload ID
     const uploadId = generateUploadId();
 
-    // Split file into chunks
-    const chunks = splitFileIntoChunks(file, CHUNK_SIZE);
-    const totalChunks = chunks.length;
+    // Calculate total chunks without splitting (optimization)
+    // Handle empty files - at least 1 chunk needed
+    const totalChunks = file.size === 0 ? 1 : Math.ceil(file.size / CHUNK_SIZE);
 
     // Create initial upload state
     const uploadState = createUploadState(
@@ -81,16 +82,6 @@ export default function FileUpload({ onUploadStart }: FileUploadProps) {
 
   const handleClick = () => {
     fileInputRef.current?.click();
-  };
-
-  const getSpeedLabel = (speed: UploadSpeed): string => {
-    const labels: Record<UploadSpeed, string> = {
-      fast: 'Fast',
-      normal: 'Normal',
-      slow: 'Slow',
-      verySlow: 'Very Slow',
-    };
-    return labels[speed];
   };
 
   const handleSpeedChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -171,5 +162,3 @@ export default function FileUpload({ onUploadStart }: FileUploadProps) {
     </div>
   );
 }
-
-
