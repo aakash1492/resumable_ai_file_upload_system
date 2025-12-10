@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { UploadState } from '../types/upload';
+import { formatBytes } from '../utils/formatters';
 
 interface ResumeUploadsProps {
   uploads: UploadState[];
@@ -39,14 +40,6 @@ export default function ResumeUploads({
     }
     resumeUploadIdRef.current = null;
   };
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
-
   const getProgress = (upload: UploadState): number => {
     const uploadedCount = upload.chunks.filter((chunk) => chunk.uploaded).length;
     return (uploadedCount / upload.totalChunks) * 100;
@@ -146,4 +139,3 @@ export default function ResumeUploads({
     </div>
   );
 }
-
